@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta http-equiv="Content-Style-Type" content="text/css">
+    <style type="text/css">
+<!--
+
+.stateMachine {
+  height : 0px;
+  width  : 0px;
+}
+
+.kadaiNaiyou,.kadaiTitle, .addKadai,
+.inputNaiyou, .inputTitle, .closer,
+.kigenTitle, .kigenYear, .kigenYearTitle, 
+.kigenMonth, .kigenMonthTitle, .kigenDay, .kigenDayTitle,
+.naiyouTitle, .naiyouBox,.naiyouTouroku, .naiyouSakujyo,
+.tuushintyuu, .tuushintyuuTitle, .tuushintyuuAnime,
+.tuushinError, .tuushinErrorTitle, .tuushinErrorOK,
+.kakunin, .kakuninTitle, .kakuninOK, .kakuninCancel {
+  position : absolute;
+}
+
+
+.kadaiTitle {
+  top  : 10px;
+  left : 10px;
+}
+
+.kadaiNaiyou {
+  top  : 30px;
+  left : 10px;
+}
+
+.addKadai {
+  top  : 5px;
+  left : 295px;
+  font-size: large;
+}
+
+.inputNaiyou {
+  top  : 70px;
+  left : 100px;
+  width : 400px;
+  height : 260px;
+  background-color : #b0c4de;
+  z-indez : 2;
+}
+
+.closer {
+  top  : 5px;
+  left : 375px;
+}
+
+.kigenTitle, .kigenYear, .kigenYearTitle, .kigenMonth,
+.kigenMonthTitle, .kigenDay, .kigenDayTitle {
+  top : 10px;
+}
+
+.kigenTitle {
+  left : 10px;
+}
+
+.kigenYear {
+  left : 60px;
+}
+
+.kigenYearTitle {
+  left : 120px;
+}
+
+.kigenMonth {
+  left : 155px;
+}
+
+.kigenMonthTitle {
+  left : 200px;
+}
+
+.kigenDay {
+  left : 240px;
+}
+
+.kigenDayTitle {
+  left : 285px;
+}
+
+.naiyouTitle, .naiyouBox {
+  left : 10px;
+}
+
+.naiyouTitle {
+  top : 60px;
+}
+
+.naiyouBox {
+  top   : 90px;
+  height: 40px;
+  width : 360px;
+  resize: none;
+}
+
+.naiyouTouroku, .naiyouSakujyo {
+  top   : 200px;
+  font-size: large;
+}
+
+.naiyouTouroku {
+  left : 220px;
+}
+
+.naiyouSakujyo {
+  left : 90px;
+}
+
+.tuushintyuu{
+  top  : 100px;
+  left : 110px;
+  width : 300px;
+  height : 200px;
+  background-color : #b0c4de;
+  z-indez : 2;
+}
+
+.tuushintyuuTitle{
+  top : 40px;
+  left : 50px;
+}
+
+.tuushintyuuAnime {
+  top : 80px;
+  left : 50px;
+  height : 30px;
+  width  : 30px;
+  background-color : white;
+  animation : elm 2s infinite;
+}
+
+@keyframes elm {
+  to {
+    transform : translate(150px);
+  }
+}
+
+.tuushinError{
+  top  : 100px;
+  left : 110px;
+  width : 300px;
+  height : 200px;
+  background-color : #ff6347;
+  z-indez : 2;
+}
+
+.tuushinErrorTitle{
+  top  : 40px;
+  left : 50px;
+}
+
+.tuushinErrorOK {
+  top  : 160px;
+  left : 130px;
+  font-size: large;
+}
+
+.kakunin {
+  top  : 100px;
+  left : 110px;
+  width : 380px;
+  height : 280px;
+  background-color : #ff6347;
+  z-indez : 3;
+}
+
+.kakuninTitle {
+  top  : 40px;
+  left : 50px;
+}
+
+.kakuninOK, .kakuninCancel {
+  top   : 180px;
+  font-size: large;
+}
+
+.kakuninOK {
+  left : 220px;
+}
+
+.kakuninCancel {
+  left : 60px;
+}
+
+-->
+    </style>
+  </head>
+  <body>
+    <div class="stateMachine"></div>
+    <div class="kadaiTitle"></div>
+    <button class="addKadai">課題の追加</button>
+    <ul  class="kadaiNaiyou"></ul>
+    <div class="inputNaiyou">
+      <div class="closer">x</div>
+      <div class="kigenTitle">期限</div>
+      <select class="kigenYear"></select>
+      <div class="kigenYearTitle">年</div>
+      <select class="kigenMonth"></select>
+      <div class="kigenMonthTitle">月</div>
+      <select class="kigenDay"></select>
+      <div class="kigenDayTitle">日</div>
+      <div class="naiyouTitle">内容</div>
+      <textarea class="naiyouBox"></textarea>
+      <button class="naiyouTouroku">登録</button>
+      <button class="naiyouSakujyo">削除</button>
+    </div>
+    <div class="tuushintyuu">
+      <div class="tuushintyuuTitle">通信しています</div>
+      <div class="tuushintyuuAnime"></div>
+    </div>
+    <div class="tuushinError">
+      <div class="tuushinErrorTitle">通信エラーが発生しました</div>
+      <button class="tuushinErrorOK">OK</button>
+    </div>
+    <div class="kakunin">
+      <div class="kakuninTitle">削除してよいですか？</div>
+      <button class="kakuninOK">OK</button>
+      <button class="kakuninCancel">Cancel</button>
+    </div>
+
+    <script>
+      const logout = true,
+        youbiStr = ['日','月','火','水','木','金','土'];
+
+// ****** ローカルで動かすときのダミー。後で消す。******
+/*
+let google = {
+  script : {
+    run : {
+      withSuccessHandler : 
+        function (seikouFunc) {
+          return {
+            withFailureHandler : function (shippaiFunc) {
+              return { 
+                getKadaiFromDB : function (dayStr){
+                  console.log('getKadaiFromDB dummy called');
+                  console.log(dayStr);
+                  setTimeout(function () {
+                    let arg = {result:[ ['startday','endday','naiyou', 'auther', 'raw'],
+                                        ['2023-1-1',  '2023-1-1',  'aaaa',   '', '1'     ],
+                                        ['2022-12-3', '2023-1-14', '英文法', '誰か', '2' ],
+                                        ['2023-1-2',  '2024-1-20',   '作文1000枚', '誰か', '3'] ] };
+                    seikouFunc(arg);
+                    //shippaiFunc();
+                  }, 200)
+                },
+                putKadaiToDB : function (karaStr, madeStr, naiyou){
+                  console.log('putKadaiToDB dummy called');
+                  console.log('karaStr:' + karaStr);
+                  console.log('madeStr:' + madeStr);
+                  console.log('naiyou:' + naiyou);
+                  setTimeout(function () {
+                    seikouFunc();
+                    //shippaiFunc();
+                  }, 200)
+                },
+              }
+            }
+          }
+        }
+    }
+  }
+}
+*/
+
+/* モジュール内ユーティリティ *******************************************************/
+
+      const enumEvent = {
+        loadDone            : 'loadDone',           // htmlのロード完了
+        sendReceiveDone     : 'sendReceiveDone',    // 通信完了
+        sendReceiveError    : 'sendReceiveError',   // 通信エラー
+        userOK              : 'userOK',             // ユーザ操作によるOK
+        userCancel          : 'userCancel',         // ユーザ操作によるキャンセル
+        userRegister        : 'userRegister',       // ユーザ操作による登録
+        userDelete          : 'userDelete',         // ユーザ操作による削除
+        userPrevDay         : 'userPrevDay',        // ユーザ操作による前日へ
+        userToday           : 'userToday',          // ユーザ操作による当日へ
+        userNextDay         : 'userNextDay',        // ユーザ操作による翌日へ
+        userInputNaiyou     : 'userInputNaiyou'     // ユーザ操作による内容入力へ
+      }
+
+      let stateMachine = (function () {
+        const enumState = {
+          none                : 'none',               // 初期状態のみ使用
+          sendAndReceive      : 'sendAndReceive',     // データ送受信中(実際は受信だけ)
+          writing             : 'writing',            // データ書き込み中
+          kadaiItiran         : 'kadaiItiran',        // 課題一覧表示中
+          dialogInputKadai    : 'dialogInputKadai',   // 課題入力ダイアログ 
+          sakujyoKakunin      : 'sakujyoKakunin',     // 削除確認画面
+          dialogError         : 'dialogError'         // エラーが発生した
+        };
+
+        let element, 
+          state = enumState.none,      // 状態をこれで管理する
+          // フラグを不用意に増やすと死ぬ。可能な限り増やさないこと
+          firstTimeDataGet = 0; // 起動時のみ使用
+                                // 0:未完了, 1:成功, 2:失敗
+
+        // 状態遷移はここに集約して管理する
+        function engine(e) {
+          if (logout) {
+            console.log('** engine event **');
+            console.log(e.type + ':' + e.detail.para1 + ':' + e.detail.para2);
+          }
+
+          switch(state) {
+            case enumState.none:               // 初期状態のみ使用
+              switch(e.type) {
+                case enumEvent.loadDone:
+                  // 既に起動時の最初のデータ取得が完了している場合は
+                  // データ送受信中を経ずに時間割表示中へ遷移
+                  // ここでは画面表示はしなくても自動的に行われている
+                  if (firstTimeDataGet == 1) {
+                    dialogOff('tuushintyuu');
+                    setNaiyou();
+                    registerKadai();
+                    setModal(false);
+                    state = enumState.kadaiItiran;
+                  
+                  } else if (firstTimeDataGet == 2) {
+
+                    dialogOff('tuushintyuu');
+                    dialogOn('tuushinError');
+                    state = enumState.dialogError;
+
+                  } else {
+                    // 普段はたぶんここに流れる
+                    // ここでは画面表示はしなくても自動的に行われている
+                    state = enumState.sendAndReceive;
+                  }
+                  break;
+
+                // calendar内部モジュールの初期化時にデータ取得は開始している
+                case enumEvent.sendReceiveDone:
+                  firstTimeDataGet == 1;
+                  break;
+                case enumEvent.sendReceiveError:
+                  firstTimeDataGet == 2;
+                  break;
+
+                default:
+                  if (logout) { console.log("state error"); }
+                  break;
+              }
+              break;
+
+            case enumState.sendAndReceive:     // データ送受信中
+              switch(e.type) {
+                case enumEvent.sendReceiveDone:
+                  dialogOff('tuushintyuu'); // 通信中ダイアログを除去
+                  setNaiyou();      // 取得した時間割の内容を画面に表示
+                  registerKadai();
+                  setModal(false);  // 操作を受け付ける
+                  state = enumState.kadaiItiran;
+                  break;
+                case enumEvent.sendReceiveError:
+                  dialogOff('tuushintyuu'); // 通信中ダイアログを除去
+                  dialogOn('tuushinError'); // 通信中エラーダイアログを表示
+                  state = enumState.dialogError;
+                  break;
+                default:
+                  if (logout) { console.log("state error"); }
+                  break;
+              }
+              break;
+
+            case enumState.writing:     // データ書き込み中
+              switch(e.type) {
+                case enumEvent.sendReceiveDone: {
+                  let now   = new Date(),
+                    year    = now.getFullYear(),
+                    month   = now.getMonth() + 1, //月は0始まり
+                    day     = now.getDate();
+                    skey    = String(year) + '-' + String(month) + '-' + String(day);
+                  getKadai(skey);
+                  state = enumState.sendAndReceive;
+                  break;
+                }
+                case enumEvent.sendReceiveError:
+                  dialogOff('tuushintyuu'); // 通信中ダイアログを除去
+                  dialogOn('tuushinError'); // 通信中エラーダイアログを表示
+                  state = enumState.dialogError;
+                  break;
+                default:
+                  if (logout) { console.log("state error"); }
+                  break;
+              }
+              break;
+
+            case enumState.kadaiItiran:          // 課題一覧表示中
+              switch(e.type) {
+                case enumEvent.userInputNaiyou:
+                  kadaiDate.setRow(e.detail.para1);
+                  setInputNaiyou(e.detail.para1);
+                  setModal(true);
+                  state = enumState.dialogInputKadai;
+                  break;
+                default:
+                  if (logout) { console.log("state error"); }
+                  break;
+              }
+              break;
+
+            case enumState.dialogInputKadai: // 課題入力ダイアログ
+              switch(e.type) {
+                case enumEvent.userRegister: { // ここでだけ使う変数を宣言するためにかっこがある
+                  let element = document.getElementsByClassName('naiyouTouroku');
+
+                  // せっかく状態で管理してるのに、こんな風に画面表示をみて処理を分けるのは良くない
+                  if (element[0].textContent == '登録') {
+                    // 登録ボタンのとき
+                    // 引数の0は特に削除を行わないことを表す
+                    putNaiyou( 0 );
+                  } else {
+                    // 修正ボタンのとき
+                    // 引数は既にDB代わりのスプレットシートに登録されている項目のIDである行を表し
+                    // これを消して、さらに項目を追加することで修正する
+                    putNaiyou( kadaiDate.getRow() );
+                  }
+                  dialogOff('inputNaiyou');
+                  dialogOn('tuushintyuu');
+                  state = enumState.writing;
+                  break;
+                }
+                case enumEvent.userDelete:
+                  dialogOn('kakunin');
+                  state = enumState.sakujyoKakunin;
+                  break;
+                case enumEvent.userCancel:
+                  dialogOff('inputNaiyou');
+                  setModal(false);
+                  state = enumState.kadaiItiran;
+                  break;
+                default:
+                  if (logout) { console.log("state error"); }
+                  break;
+              }
+              break;
+
+            case enumState.sakujyoKakunin:// 削除確認画面
+              switch(e.type) {
+                case enumEvent.userOK:
+                  dialogOff('kakunin');
+                  deleteNaiyou();
+                  dialogOff('inputNaiyou');
+                  dialogOn('tuushintyuu');
+                  state = enumState.writing;
+                  break;
+                case enumEvent.userCancel:
+                  dialogOff('kakunin');
+                  state = enumState.dialogInputKadai;
+                  break;
+              }
+              break;
+
+            case enumState.dialogError:         // エラーが発生した
+              switch(e.type) {
+                case enumEvent.userOK:
+                  dialogOff('tuushinError'); // 通信中エラーダイアログを除去
+                  setModal(false);  // 操作を受け付ける
+                  state = enumState.kadaiItiran;
+                  break;
+                default:
+                  if (logout) { console.log("state error"); }
+                  break;
+              }
+              break;
+
+            default:
+              if (logout) { console.log("state error"); }
+              break;
+          }
+        }
+
+        function initStateMachine () {
+          element = document.getElementsByClassName('stateMachine');
+
+          for (eventName in enumEvent) {
+            element[0].addEventListener(eventName, engine);
+          }
+        }
+
+        function dispatchInnerEvent(eventName, para1, para2) {
+          let myEvent = new CustomEvent ( eventName, {
+            detail: { para1 : para1,
+                      para2 : para2 }
+          });
+
+          element[0].dispatchEvent(myEvent);
+        }
+
+        // ここが公開API(モジュール内に対してだけだが)
+        return { initStateMachine   : initStateMachine,    // htmlのロード後に初期化
+                 dispatchInnerEvent : dispatchInnerEvent}; // 内部イベント送信
+      })();
+
+      let kadaiDate = (function() {
+        let row,
+          kadaiContents = null;
+
+        function _set(contents) {
+          kadaiContents = contents;
+        }
+
+        function _get() {
+          return kadaiContents;
+        }
+
+        function _setRow(arg) {
+          row = arg;
+        }
+
+        function _getRow(){
+          return row;
+        }
+
+        // ここが公開API(モジュール内に対してだけだが)
+        return { set    : _set,     // 対象の課題データを設定する
+                 get    : _get,     // 対象の課題データを取得する
+                 setRow : _setRow,  // スプレッドシートにおける行を設定
+                 getRow : _getRow}; // スプレッドシートにおける行を取得
+      })();
+
+      let kadaiClickHandler = (function() {
+        let targetClass = [];
+
+        function _addClass(cls) {
+          targetClass.push(cls);
+        }
+
+        function _get() {
+          return targetClass;
+        }
+
+        function _clear() {
+          targetClass = [];
+        }
+
+
+        // ここが公開API(モジュール内に対してだけだが)
+        return { addClass : _addClass,  // ハンドラを登録する対象のクラスを追加する
+                 get      : _get,       // ハンドラを登録する対象のクラスたちを取得する
+                 clear    : _clear };
+      })();
+
+
+/* ページ読み込み時の処理 *******************************************************/
+
+      window.onload = function(){
+        let element,
+          now     = new Date(),
+          year    = now.getFullYear(),
+          month   = now.getMonth() + 1, //月は0始まり
+          day     = now.getDate();
+          skey    = String(year) + '-' + String(month) + '-' + String(day);
+
+        // 状態遷移マシンの初期化
+        stateMachine.initStateMachine();
+
+        // タイトルの設定
+        setKadaiTitle(String(month) + '/ ' + String(day) + '(' + youbiStr[now.getDay()]  + ')');
+
+        // 課題データの取得開始
+        getKadai(skey);
+
+        // 通信中以外のダイアログは表示されないようにする。
+        dialogOff('inputNaiyou');
+        dialogOff('tuushinError');
+        dialogOff('kakunin');
+
+        // ボタンクリックのハンドラ登録 なお、各課題をクリックしたときのハンドラは
+        // 課題取得後にしか設定できないので別途している。
+        registerClick();
+
+        // 通信中のダイアログ表示中なので、それ以外は操作を受け付けない
+        setModal(true);
+
+        stateMachine.dispatchInnerEvent(enumEvent.loadDone);
+      }
+
+/* 描画系 *******************************************************/
+
+      function dialogOff(target) {
+        let element = document.getElementsByClassName(target);
+          element[0].style.display ="none";
+      }
+
+      function dialogOn(target) {
+        let element = document.getElementsByClassName(target);
+          element[0].style.display ="block";
+      }
+
+      function setKadaiTitle(dayStr) {
+        let element;
+
+        element = document.getElementsByClassName('kadaiTitle');
+        element[0].textContent = '本日 ' + dayStr + ' 時点の提出物・課題';
+      }
+
+      function setNaiyou() {
+        let i, element, addElement,
+          naiyou = kadaiDate.get(),
+          getDayStr = function (dayStr) {
+            // '2023-1-14'だと長いので月と日だけにする
+            let d = dayStr.split('-')
+            return (d[1] + '/' + d[2] + 'まで');
+          }
+
+          element = document.getElementsByClassName('kadaiNaiyou');
+
+          // 追記するとどんどん増えてくので一旦削除
+          while( element[0].firstChild ){
+            element[0].removeChild( element[0].firstChild );
+          }
+
+          if (naiyou.length == 0) {
+            addElement = document.createElement('li');
+            addElement.textContent = 'なし';
+            element[0].appendChild(addElement);
+          } else {
+            for (i = 0; i < naiyou.length; i++) {
+              let className;
+
+              addElement = document.createElement('li');
+              addElement.textContent = getDayStr(naiyou[i][1]) + '　'+ naiyou[i][2];
+              // naiyou[i][4]はDBにしているスプレッドシートにおける行
+              className = 'kadai' + '-' + naiyou[i][4];
+              addElement.className = className;
+              element[0].appendChild(addElement);
+
+              kadaiClickHandler.addClass(className); // ハンドラを登録するクラス名を保存
+            }
+          }
+      }
+
+      function setInputNaiyou(row) {
+        let element, node, str, now, targetYear, targetMonth, targetDay,
+          showYears  = [],
+          showMonths = [],
+          showDays   = [],
+          selectf = function (row) {
+            return function (target) {
+              if ( Number(target[4]) == Number(row) ) {
+                return true;
+              }
+            }
+          },
+          makeMonth = function (m) {
+            if (m <= 12) {
+              return m;
+            } else {
+              return (m % 12);
+            }
+          },
+          readyf = function (className, preSetValue, addItems) {
+            let ele = document.getElementsByClassName(className);
+            for (let i in addItems) {
+              let node = document.createElement('option');
+              node.text = addItems[i];
+              node.value = addItems[i];
+              if (Number(addItems[i]) == Number(preSetValue)) {
+                node.selected = true;
+              }
+              ele[0].appendChild(node);
+            }
+          };
+
+        // プルダウンに表示する年月日の設定
+        now = new Date();
+        showYears.push(String(now.getFullYear())); // 年は今年と次
+        showYears.push(String(now.getFullYear() + 1));
+        showMonths.push(String(makeMonth(now.getMonth() + 1))); // 月は3カ月分
+        showMonths.push(String(makeMonth(now.getMonth() + 2))); // 月は0始まり
+        showMonths.push(String(makeMonth(now.getMonth() + 3)));
+        for (let i = 1; i <= 31; i++) { // 日は固定で31まで
+          showDays.push(String(i));
+        }
+
+        // プルダウンに初期選択する値の設定
+        // なお、row:スプレッドシートにおける行は課題を一意に識別する。
+        // これが0の時は新規登録。そうでないときは編集。
+        if (Number(row) == 0) {
+          targetYear  = now.getFullYear();
+          targetMonth = now.getMonth() + 1; //月は0始まり
+          targetDay   = now.getDate();
+        } else {
+          let target,
+            kadais = kadaiDate.get();
+          
+          target = kadais.find(selectf(row));
+          if (target != null) {
+            let d = target[1].split('-');
+
+            targetYear  = d[0];
+            targetMonth = d[1];
+            targetDay   = d[2];
+          }
+        }
+
+        // 表示されるようにする
+        element = document.getElementsByClassName('inputNaiyou');
+        element[0].style.display ="block";
+
+        // 子どもを消さないと、次々にリストが増えていくので、一旦削除
+        element = document.getElementsByClassName('kigenYear');
+        while( element[0].firstChild ){
+          element[0].removeChild( element[0].firstChild );
+        }
+        element = document.getElementsByClassName('kigenMonth');
+        while( element[0].firstChild ){
+          element[0].removeChild( element[0].firstChild );
+        }
+        element = document.getElementsByClassName('kigenDay');
+        while( element[0].firstChild ){
+          element[0].removeChild( element[0].firstChild );
+        }
+
+        // 年月日の表示
+        readyf('kigenYear',  targetYear,  showYears);
+        readyf('kigenMonth', targetMonth, showMonths);
+        readyf('kigenDay',   targetDay,   showDays);
+
+        // 内容とボタンの表示
+        if (Number(row) == 0) {
+          element = document.getElementsByClassName('naiyouBox');
+          element[0].value = '';
+
+          element = document.getElementsByClassName('naiyouSakujyo');
+          element[0].style.display ="none";
+
+          element = document.getElementsByClassName('naiyouTouroku');
+          element[0].textContent = '登録'
+        } else {
+          let target,
+            kadais = kadaiDate.get();
+          
+          target = kadais.find(selectf(row));
+          if (target != null) {
+            element = document.getElementsByClassName('naiyouBox');
+            element[0].value = target[2];
+          }
+
+          element = document.getElementsByClassName('naiyouSakujyo');
+          element[0].style.display ="block";
+
+          element = document.getElementsByClassName('naiyouTouroku');
+          element[0].textContent = '修正'
+        }
+      }
+
+/* 通信系 *******************************************************/
+
+      function getKadai (dayStr) {
+        google.script.run.withSuccessHandler(function(arg){
+          // 成功時の処理
+          if (arg.result.length != 0) {
+            arg.result.shift(); // 先頭はタイトルだから要らない。
+                                // これは破壊的な処理である
+            kadaiDate.set(arg.result);
+          }
+          if (logout) {
+            console.log("getKadai success");
+            console.log(arg.result);
+          }
+          stateMachine.dispatchInnerEvent(enumEvent.sendReceiveDone);
+
+        }).withFailureHandler(function(arg){
+          // 失敗時の処理
+          if (logout) {console.log("getKadai failure")};
+
+          stateMachine.dispatchInnerEvent(enumEvent.sendReceiveError);
+
+        }).getKadaiFromDB(dayStr);
+      }
+
+      function putNaiyou (delrow) {
+        let today, year, month, day, naiyou,
+          now = new Date();
+
+        today = String(now.getFullYear()) + '-';
+        today += String(now.getMonth() + 1) + '-'; //月は0始まり
+        today += String(now.getDate());
+
+        element = document.getElementsByClassName('kigenYear');
+        year = element[0].value;
+        element = document.getElementsByClassName('kigenMonth');
+        month = element[0].value;
+        element = document.getElementsByClassName('kigenDay');
+        day = element[0].value;
+        element = document.getElementsByClassName('naiyouBox');
+        naiyou = element[0].value;
+
+        putNaiyouInner(today, year + '-' + month + '-' + day , naiyou, delrow);
+      }
+
+      function deleteNaiyou () {
+        let row = kadaiDate.getRow();
+
+        google.script.run.withSuccessHandler(function(arg){
+          // 成功時の処理
+          stateMachine.dispatchInnerEvent(enumEvent.sendReceiveDone);
+
+        }).withFailureHandler(function(arg){
+          // 失敗時の処理
+          stateMachine.dispatchInnerEvent(enumEvent.sendReceiveError);
+
+        }).deleteKadaiInDB(row);
+
+      }
+
+      function putNaiyouInner (karaStr, madeStr, naiyou, delrow) {
+
+        google.script.run.withSuccessHandler(function(arg){
+          // 成功時の処理
+          stateMachine.dispatchInnerEvent(enumEvent.sendReceiveDone);
+
+        }).withFailureHandler(function(arg){
+          // 失敗時の処理
+          stateMachine.dispatchInnerEvent(enumEvent.sendReceiveError);
+
+        }).putKadaiToDB(karaStr, madeStr, naiyou, delrow);
+      }
+
+/* イベントハンドラ系 *******************************************************/
+
+      function onCloserClick() {
+        stateMachine.dispatchInnerEvent(enumEvent.userCancel);
+      }
+
+      function ontuushinErrorOK() {
+          stateMachine.dispatchInnerEvent(enumEvent.userOK);
+      }
+
+      function onkadaiClick() {
+        let clsName = this.getAttribute('class'),
+          clicked = clsName.split('-'), // clicked[1]でスプレッドシートにおける行がとれる
+          gyou = clicked[1];
+
+          stateMachine.dispatchInnerEvent(enumEvent.userInputNaiyou, gyou);
+      }
+
+      function onNaiyouTouroku() {
+        stateMachine.dispatchInnerEvent(enumEvent.userRegister);
+      }
+
+      function onNaiyouSakujyo() {
+        stateMachine.dispatchInnerEvent(enumEvent.userDelete);
+      }
+
+      function onKakuninOK() {
+        stateMachine.dispatchInnerEvent(enumEvent.userOK);
+      }
+
+      function onKakuninCancel() {
+        stateMachine.dispatchInnerEvent(enumEvent.userCancel);
+      }
+
+      function onAddKadai() {
+        stateMachine.dispatchInnerEvent(enumEvent.userInputNaiyou, 0);
+      }
+
+      function setModal(flg) {
+        let element, setModalconfig;
+
+        if ( flg == true ) {
+          setModalconfig = 'none';
+        } else {
+          setModalconfig = 'auto';
+        }
+
+        element = document.getElementsByClassName('kadaiNaiyou');
+        element[0].style.pointerEvents = setModalconfig;
+      }
+
+/* イベントハンドラ登録系 *******************************************************/
+
+      function registerKadai() {
+        let i, element,
+          className = kadaiClickHandler.get();
+
+        for (i = 0; i < className.length ;i++) {
+          element = document.getElementsByClassName(className[i]);
+          element[0].addEventListener('click', onkadaiClick);
+        }
+
+        kadaiClickHandler.clear();
+      }
+
+      function registerClick() {
+        let i, element;
+
+        element = document.getElementsByClassName('closer');
+        element[0].addEventListener('click', onCloserClick);
+
+        element = document.getElementsByClassName('naiyouTouroku');
+        element[0].addEventListener('click', onNaiyouTouroku);
+
+        element = document.getElementsByClassName('naiyouSakujyo');
+        element[0].addEventListener('click', onNaiyouSakujyo);
+
+        element = document.getElementsByClassName('tuushinErrorOK');
+        element[0].addEventListener('click', ontuushinErrorOK);
+
+        element = document.getElementsByClassName('kakuninOK');
+        element[0].addEventListener('click', onKakuninOK);
+
+        element = document.getElementsByClassName('kakuninCancel');
+        element[0].addEventListener('click', onKakuninCancel);
+
+        element = document.getElementsByClassName('addKadai');
+        element[0].addEventListener('click', onAddKadai);
+      }
+
+    </script>
+  </body>
+</html>
