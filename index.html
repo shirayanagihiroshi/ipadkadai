@@ -15,7 +15,7 @@
 .inputNaiyou, .inputTitle, .closer,
 .kigenTitle, .kigenYear, .kigenYearTitle, 
 .kigenMonth, .kigenMonthTitle, .kigenDay, .kigenDayTitle,
-.naiyouTitle, .naiyouBox,.naiyouTouroku, .naiyouSakujyo,
+.naiyouTitle, .naiyouBox,.naiyouTouroku, .naiyouSakujyo, .submission,
 .tuushintyuu, .tuushintyuuTitle, .tuushintyuuAnime,
 .tuushinError, .tuushinErrorTitle, .tuushinErrorOK,
 .kakunin, .kakuninTitle, .kakuninOK, .kakuninCancel {
@@ -42,7 +42,7 @@
 .inputNaiyou {
   top  : 70px;
   left : 100px;
-  width : 400px;
+  width : 410px;
   height : 260px;
   background-color : #b0c4de;
   z-indez : 2;
@@ -50,7 +50,7 @@
 
 .closer {
   top  : 5px;
-  left : 375px;
+  left : 380px;
 }
 
 .kigenTitle, .kigenYear, .kigenYearTitle, .kigenMonth,
@@ -107,11 +107,17 @@
 }
 
 .naiyouTouroku {
-  left : 220px;
+  left : 330px;
 }
 
 .naiyouSakujyo {
-  left : 90px;
+  left : 10px;
+}
+
+.submission {
+  top  : 185px;
+  left : 105px;
+  font-size: xx-large;
 }
 
 .tuushintyuu{
@@ -175,6 +181,7 @@
 .kakuninTitle {
   top  : 40px;
   left : 50px;
+  width : 280px;
 }
 
 .kakuninOK, .kakuninCancel {
@@ -188,6 +195,14 @@
 
 .kakuninCancel {
   left : 60px;
+}
+
+.teisyutsuSumi {
+  color : #a9a9a9;
+}
+
+.miteisyutsu {
+  color : blue;
 }
 
 -->
@@ -211,6 +226,7 @@
       <textarea class="naiyouBox"></textarea>
       <button class="naiyouTouroku">登録</button>
       <button class="naiyouSakujyo">削除</button>
+      <button class="submission">私は済です</button>
     </div>
     <div class="tuushintyuu">
       <div class="tuushintyuuTitle">通信しています</div>
@@ -221,7 +237,7 @@
       <button class="tuushinErrorOK">OK</button>
     </div>
     <div class="kakunin">
-      <div class="kakuninTitle">削除してよいですか？</div>
+      <div class="kakuninTitle">削除するとクラス全員がこの課題を見られなくなります。削除してよいですか？</div>
       <button class="kakuninOK">OK</button>
       <button class="kakuninCancel">Cancel</button>
     </div>
@@ -252,16 +268,24 @@ let google = {
                     //shippaiFunc();
                   }, 200)
                 },
-                putKadaiToDB : function (karaStr, madeStr, naiyou){
+                putKadaiToDB : function (karaStr, madeStr, naiyou, delrow){
                   console.log('putKadaiToDB dummy called');
                   console.log('karaStr:' + karaStr);
                   console.log('madeStr:' + madeStr);
                   console.log('naiyou:' + naiyou);
+                  console.log('delrow:' + delrow);
                   setTimeout(function () {
                     seikouFunc();
                     //shippaiFunc();
                   }, 200)
                 },
+                deleteKadaiInDB : function (row){
+                  console.log('row:' + row);
+                  setTimeout(function () {
+                    seikouFunc();
+                    //shippaiFunc();
+                  }, 200)
+                }
               }
             }
           }
@@ -281,6 +305,7 @@ let google = {
         userCancel          : 'userCancel',         // ユーザ操作によるキャンセル
         userRegister        : 'userRegister',       // ユーザ操作による登録
         userDelete          : 'userDelete',         // ユーザ操作による削除
+        userSubmissyion     : 'userSubmissyion',    // ユーザ操作による提出済
         userPrevDay         : 'userPrevDay',        // ユーザ操作による前日へ
         userToday           : 'userToday',          // ユーザ操作による当日へ
         userNextDay         : 'userNextDay',        // ユーザ操作による翌日へ
@@ -421,7 +446,7 @@ let google = {
                     putNaiyou( 0 );
                   } else {
                     // 修正ボタンのとき
-                    // 引数は既にDB代わりのスプレットシートに登録されている項目のIDである行を表し
+                    // 引数はDB代わりのスプレットシートに登録されている項目のIDである行を表し
                     // これを消して、さらに項目を追加することで修正する
                     putNaiyou( kadaiDate.getRow() );
                   }
@@ -433,6 +458,14 @@ let google = {
                 case enumEvent.userDelete:
                   dialogOn('kakunin');
                   state = enumState.sakujyoKakunin;
+                  break;
+                case enumEvent.userSubmissyion:
+                  mySubmission.set(Number(kadaiDate.getRow()));
+                  dialogOff('inputNaiyou');
+                  setModal(false);
+                  setNaiyou();      // 取得した時間割の内容を画面に表示
+                  registerKadai();
+                  state = enumState.kadaiItiran;
                   break;
                 case enumEvent.userCancel:
                   dialogOff('inputNaiyou');
@@ -497,7 +530,7 @@ let google = {
           element[0].dispatchEvent(myEvent);
         }
 
-        // ここが公開API(モジュール内に対してだけだが)
+        // ここが公開API(公開範囲はこのファイル内)
         return { initStateMachine   : initStateMachine,    // htmlのロード後に初期化
                  dispatchInnerEvent : dispatchInnerEvent}; // 内部イベント送信
       })();
@@ -522,7 +555,7 @@ let google = {
           return row;
         }
 
-        // ここが公開API(モジュール内に対してだけだが)
+        // ここが公開API(公開範囲はこのファイル内)
         return { set    : _set,     // 対象の課題データを設定する
                  get    : _get,     // 対象の課題データを取得する
                  setRow : _setRow,  // スプレッドシートにおける行を設定
@@ -545,10 +578,55 @@ let google = {
         }
 
 
-        // ここが公開API(モジュール内に対してだけだが)
+        // ここが公開API(公開範囲はこのファイル内)
         return { addClass : _addClass,  // ハンドラを登録する対象のクラスを追加する
                  get      : _get,       // ハンドラを登録する対象のクラスたちを取得する
                  clear    : _clear };
+      })();
+
+      let mySubmission = (function() {
+        let localStrageUsable, items;
+
+        function _init() {
+          let mystr;
+          if (typeof window.localStorage !== undefined) {
+            localStrageUsable = true;
+
+            mystr = window.localStorage.getItem('mySubmission');
+            items = JSON.parse(mystr);
+          } else {
+            localStrageUsable = false;
+          }
+        }
+
+        function _exist(item) {
+          if (localStrageUsable) {
+            if (items != null) {
+              if (items.indexOf(item) != -1) {
+                return true;
+              }
+            }
+          }
+          return false;
+        }
+
+        function _set(item) {
+          let mystr;
+          if (localStrageUsable) {
+            if (items == null) {
+              items = [item];
+            } else {
+              items.push(item);
+            }
+            mystr = JSON.stringify(items);
+            localStorage.setItem('mySubmission', mystr);
+          }
+        }
+
+        // ここが公開API(公開範囲はこのファイル内)
+        return { init    : _init,
+                 exist   : _exist,
+                 set     : _set };
       })();
 
 
@@ -564,6 +642,9 @@ let google = {
 
         // 状態遷移マシンの初期化
         stateMachine.initStateMachine();
+
+        // 自分が提出した課題のリストを扱う準備
+        mySubmission.init();
 
         // タイトルの設定
         setKadaiTitle(String(month) + '/ ' + String(day) + '(' + youbiStr[now.getDay()]  + ')');
@@ -630,10 +711,17 @@ let google = {
               let className;
 
               addElement = document.createElement('li');
-              addElement.textContent = getDayStr(naiyou[i][1]) + '　'+ naiyou[i][2];
               // naiyou[i][4]はDBにしているスプレッドシートにおける行
               className = 'kadai' + '-' + naiyou[i][4];
-              addElement.className = className;
+              // 提出済リストにあるとき
+              if (mySubmission.exist(Number(naiyou[i][4]))) {
+                addElement.textContent = '(済) ' + getDayStr(naiyou[i][1]) + '　'+ naiyou[i][2];
+                addElement.classList.add(className, 'teisyutsuSumi');
+              // 提出済リストにないとき
+              } else {
+                addElement.textContent = getDayStr(naiyou[i][1]) + '　'+ naiyou[i][2];
+                addElement.classList.add(className, 'miteisyutsu');
+              }
               element[0].appendChild(addElement);
 
               kadaiClickHandler.addClass(className); // ハンドラを登録するクラス名を保存
@@ -736,6 +824,9 @@ let google = {
           element = document.getElementsByClassName('naiyouSakujyo');
           element[0].style.display ="none";
 
+          element = document.getElementsByClassName('submission');
+          element[0].style.display ="none";
+
           element = document.getElementsByClassName('naiyouTouroku');
           element[0].textContent = '登録'
         } else {
@@ -749,6 +840,9 @@ let google = {
           }
 
           element = document.getElementsByClassName('naiyouSakujyo');
+          element[0].style.display ="block";
+
+          element = document.getElementsByClassName('submission');
           element[0].style.display ="block";
 
           element = document.getElementsByClassName('naiyouTouroku');
@@ -841,7 +935,7 @@ let google = {
 
       function onkadaiClick() {
         let clsName = this.getAttribute('class'),
-          clicked = clsName.split('-'), // clicked[1]でスプレッドシートにおける行がとれる
+          clicked = clsName.split(' ')[0].split('-'), // clicked[1]でスプレッドシートにおける行がとれる
           gyou = clicked[1];
 
           stateMachine.dispatchInnerEvent(enumEvent.userInputNaiyou, gyou);
@@ -853,6 +947,10 @@ let google = {
 
       function onNaiyouSakujyo() {
         stateMachine.dispatchInnerEvent(enumEvent.userDelete);
+      }
+
+      function onSubmission() {
+        stateMachine.dispatchInnerEvent(enumEvent.userSubmissyion);
       }
 
       function onKakuninOK() {
@@ -891,6 +989,9 @@ let google = {
           element[0].addEventListener('click', onkadaiClick);
         }
 
+        // クリック可能な課題はユーザ操作で消えることがある。
+        // クリックを登録する元ネタのクラスのリストは、イベントハンドラを登録したら
+        // 一旦空にしておく。
         kadaiClickHandler.clear();
       }
 
@@ -905,6 +1006,9 @@ let google = {
 
         element = document.getElementsByClassName('naiyouSakujyo');
         element[0].addEventListener('click', onNaiyouSakujyo);
+
+        element = document.getElementsByClassName('submission');
+        element[0].addEventListener('click', onSubmission);
 
         element = document.getElementsByClassName('tuushinErrorOK');
         element[0].addEventListener('click', ontuushinErrorOK);
